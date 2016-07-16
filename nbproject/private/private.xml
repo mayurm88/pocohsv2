@@ -6,6 +6,12 @@
     </data>
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/Users/mayur/NetBeansProjects/pohohsv2/JsonPost.cpp</file>
+            <file>file:/Users/mayur/NetBeansProjects/pohohsv2/tests/JsonPlaceHolderTests.h</file>
+            <file>file:/Users/mayur/NetBeansProjects/pohohsv2/JsonPost.h</file>
+            <file>file:/Users/mayur/NetBeansProjects/pohohsv2/tests/JsonPlaceHolderRunner.cpp</file>
+            <file>file:/Users/mayur/NetBeansProjects/pohohsv2/tests/JsonPlaceHolderTests.cpp</file>
+        </group>
     </open-files>
 </project-private>

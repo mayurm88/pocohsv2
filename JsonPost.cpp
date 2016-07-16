@@ -38,6 +38,41 @@ Response* ResponseNotification::getResponse(){
     return response;
 }
 
+void Response::setReqID(int id){
+    reqID = id;
+}
+
+int Response::getReqID(){
+    return reqID;
+}
+
+bool Observer::responseAvailable(){
+    return _responseAvailable;
+}
+
+void Observer::setResponseAvailable(bool flag){
+    _responseAvailable = flag;
+}
+
+
+Response* Observer::getResponse() {
+    Notification::Ptr pNf(responseQueue.waitDequeueNotification());
+    if (pNf) {
+        ResponseNotification::Ptr pResNf = pNf.cast<ResponseNotification>();
+        if (pResNf) {
+            Response* res = pResNf->getResponse();
+            if(!responseQueue.size()){
+                FastMutex::ScopedLock lock(observerMutex);
+                _responseAvailable = false;
+            }
+            return res;
+        } else
+            return NULL;
+    } else 
+        return NULL;
+}
+
+
 /*
 
 RequestNotification::RequestNotification(Request* req):
@@ -54,15 +89,16 @@ Request* RequestNotification::getRequest() const
 
 class ResponseRunnable : public Poco::Runnable{
 public:
-    ResponseRunnable(int* id, NotificationQueue& q):
-    reqID(id),
-    resQueue(q)
+    ResponseRunnable(int pID, Observer& o, int rID):
+    postID(pID),
+    observer(o),
+    reqID(rID)
     {
     }
     virtual void run(){
         try{
             std::string result;
-            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(*reqID));
+            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(postID));
             std::string path(uri.getPathAndQuery());
             HTTPClientSession session(uri.getHost(), uri.getPort());
             HTTPRequest request(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
@@ -73,7 +109,12 @@ public:
                     StreamCopier::copyToString(rs, result);
                     Response *res = new Response;
                     res->setResponseString(result);
-                    resQueue.enqueueNotification(new ResponseNotification(res));
+                    res->setReqID(reqID);
+                    observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                    {
+                        FastMutex::ScopedLock lock(Observer::observerMutex);
+                        observer.setResponseAvailable(true);
+                    }
                 }
         }
         catch(Exception& exc){
@@ -81,19 +122,29 @@ public:
         }
     }
 private:
-    int* reqID;
-    NotificationQueue& resQueue;
+    int postID;
+    int reqID;
+    Observer& observer;
 };
 
 
-int JsonPost::doGet(int* id, NotificationQueue& queue){
-    ResponseRunnable* runnable = new ResponseRunnable(id, queue);
+FastMutex JsonPost::reqIDMutex;
+FastMutex Observer::observerMutex;
+
+int JsonPost::doGet(int id, Observer& o){
+    int reqID;
+    {
+        FastMutex::ScopedLock lock(reqIDMutex);
+        reqID = ++requestID;
+    }
+    ResponseRunnable* runnable = new ResponseRunnable(id, o, reqID);
     Thread* t = new Thread;
     t->start(*runnable);
-    return 0;
+    return reqID;
 }
 
 JsonPost::JsonPost() {
+    requestID = 0;
 }
 
 JsonPost::JsonPost(const JsonPost& orig) {

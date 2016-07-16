@@ -18,16 +18,16 @@
 #include "Poco//Thread.h"
 
 
+/*
 class Request {
 public:
     int id;
     Poco::NotificationQueue* resQ;
-    /*
     Request(int reqID, Poco::NotificationQueue* resQueue):
     id(reqID),
     resQ(resQueue)
     {
-    }*/
+    }
 };
 
 class RequestNotification: public Poco::Notification{
@@ -38,16 +38,32 @@ public:
 private:
     Request* request;
 };
+*/
 
 
 class Response {
 public:
     void setResponseString(std::string);
     std::string getResponseString();
+    void setReqID(int id);
+    int getReqID();
 private:
+    int reqID;
     std::string resStr; // Response string if the user wants to convert to JSON.
 };
 
+
+class Observer{
+public:
+    bool responseAvailable();
+    Response* getResponse();
+    void setResponse(Response* r);
+    void setResponseAvailable(bool);
+    Poco::NotificationQueue responseQueue;
+    static Poco::FastMutex observerMutex;
+private:
+    bool _responseAvailable;
+};
 
 class ResponseNotification: public Poco::Notification{
 public:
@@ -65,9 +81,11 @@ class JsonPost {
 public:
     JsonPost();
     JsonPost(const JsonPost& orig);
-    int doGet(int* id, Poco::NotificationQueue&);
+    int doGet(int id, Observer&);
     virtual ~JsonPost();
 private:
+    static Poco::FastMutex reqIDMutex;
+    int requestID;
 };
 
 #endif	/* JSONPOST_H */

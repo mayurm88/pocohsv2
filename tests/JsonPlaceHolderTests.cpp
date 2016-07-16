@@ -45,28 +45,20 @@ void JsonPlaceHolderTests::testFailedMethod() {
 
 void JsonPlaceHolderTests::testGetID(){
     JsonPost jp;
-    NotificationQueue myQueue;
+    Observer ob;
     std::string testString, resultString;
-    int responseID;
-    int* id = new int;
+    int rID;
+    int id;
+    Response* res;
     testString = "{\n  \"userId\": 1,\n  \"id\": 10,\n  \"title\": \"optio molestias id quia eum\",\n  \"body\": \"quo et expedita modi cum officia vel magni\\ndoloribus qui repudiandae\\nvero nisi sit\\nquos veniam quod sed accusamus veritatis error\"\n}";
     try{    
-        *id = 10;
-        responseID = jp.doGet(id, myQueue);
-
+        id = 10;
+        rID = jp.doGet(id, ob);
+        std::cout<<std::endl<<"Request id for GET request is "<<rID<<std::endl;
         while(1){
-            if(myQueue.size() != 0){
-                Notification::Ptr pNf(myQueue.waitDequeueNotification());
-                if(pNf){
-                    ResponseNotification::Ptr pResNf = pNf.cast<ResponseNotification>();
-                    if (pResNf) {
-                        Response* res = pResNf->getResponse();
-                        resultString = res->getResponseString();
-                    }
-                }
-                else{
-                    resultString = "";
-                }
+            if(ob.responseAvailable()){
+                res = ob.getResponse();
+                resultString = res->getResponseString();
                 break;
             }
             else{
@@ -78,6 +70,7 @@ void JsonPlaceHolderTests::testGetID(){
     catch(Exception& e){
             std::cerr<<e.displayText()<<std::endl;
     }
+    std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
     if(!testString.compare(resultString))
         CPPUNIT_ASSERT(true);
     else
