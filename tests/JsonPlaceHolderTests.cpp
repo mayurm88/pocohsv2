@@ -54,16 +54,25 @@ void JsonPlaceHolderTests::testGetID(){
         *id = 10;
         responseID = jp.doGet(id, myQueue);
 
-        Notification::Ptr pNf(myQueue.waitDequeueNotification());
-        if(pNf){
-            ResponseNotification::Ptr pResNf = pNf.cast<ResponseNotification>();
-            if (pResNf) {
-                Response* res = pResNf->getResponse();
-                resultString = res->getResponseString();
+        while(1){
+            if(myQueue.size() != 0){
+                Notification::Ptr pNf(myQueue.waitDequeueNotification());
+                if(pNf){
+                    ResponseNotification::Ptr pResNf = pNf.cast<ResponseNotification>();
+                    if (pResNf) {
+                        Response* res = pResNf->getResponse();
+                        resultString = res->getResponseString();
+                    }
+                }
+                else{
+                    resultString = "";
+                }
+                break;
             }
-        }
-        else{
-            resultString = "";
+            else{
+                std::cout<<"I am doing some other work"<<std::endl;
+                Thread::sleep(10);
+            }
         }
     }
     catch(Exception& e){
