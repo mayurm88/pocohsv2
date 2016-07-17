@@ -1,0 +1,41 @@
+About:
+
+GET/PUT/DELETE/POST REST calls on http://jsonplaceholder.typicode.com/ implemented in a library.
+A user can make an application using this library to make the specific API calls.
+
+GET - doGet
+POST - doPost
+PUT - doUpdate
+DELETE - doDelete
+
+Above gives the method in this library corresponding to each of the REST calls. The signature of each of the methods is :
+
+int doGet(int id, Observer&);
+int doGet(Observer&);
+int doPost(std::string title, std::string body, int userID, Observer&);
+int doUpdate(int id, std::string title, std::string body, int userID, Observer&);
+int doDelete(int id, Observer&);
+
+An application has to pass to create an Observer object and pass it along with the call for a non-blocking REST call.
+The response availability can be checked in observer using responseAvailable method. Once the response is available, the user can get the 
+pointer to the response object using observer's getResponse method. All the methods are thread safe.
+
+Requirements:
+
+OS : MAC OS X
+Tools: 
+1. git, make, g++(supporting c++11 standard), poco library installation
+2. You can build and install the poco library from source from here : http://pocoproject.org/download/index.html
+3. At the time of writing this, poco-1.7.3 was used. The basic edition is good enough. Complete edition is not required for this application.
+
+Follow steps below to compile and run the app:
+
+ 1. Make sure the Poco include files are in /usr/local/include and the Poco libraries are in /usr/local/lib. If this is not the case, you will have to modify the Makefile to compile the program.
+ 2. Go to any directory you want the source code to be downloaded
+ 3. type 'git clone https://github.com/musicophilic/pocohsv2'
+ 4. cd pocohsv2
+ 5. make clobber clean
+ 6. make
+ 7. The library file will be generated : ./dist/Debug/GNU-MacOSX/libpohohsv2.dylib
+ 8. Use this library in your application to make the above calls.
+ 9. To test the library with the included unit tests, you can type 'make test'. You will required the CppUnit library installed in /usr/local/lib to test.

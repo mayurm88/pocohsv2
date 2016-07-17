@@ -9,6 +9,7 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
+      <itemPath>README</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -67,6 +68,8 @@
       </item>
       <item path="JsonPost.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="README" ex="false" tool="3" flavor2="0">
+      </item>
       <folder path="TestFiles/f1">
         <cTool>
           <commandLine>`cppunit-config --cflags`</commandLine>
@@ -111,6 +114,8 @@
       <item path="JsonPost.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="JsonPost.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="README" ex="false" tool="3" flavor2="0">
       </item>
       <folder path="TestFiles/f1">
         <cTool>

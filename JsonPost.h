@@ -18,6 +18,10 @@
 #include "Poco//Thread.h"
 
 
+/*
+ * Use of enum class requires a compiler that support C++11 standard
+ * this is the enum type of request type required while creating request objects.
+ */
 
 enum class reqType {GET, GETID, POST, UPDATE, DELETE};
 
@@ -69,16 +73,6 @@ private:
     reqType _reqType;
 };
 
-/*
-class RequestNotification: public Poco::Notification{
-public:
-    typedef Poco::AutoPtr<RequestNotification> Ptr;
-    RequestNotification(Request* req);
-    Request* getRequest() const;
-private:
-    Request* request;
-};
-*/
 
 
 class Response {
@@ -96,6 +90,13 @@ private:
 };
 
 
+/*
+ * Observer class should ideally be one per thread. The thread can create an observer and wait for the responses in the responseQueue.
+ * Thread has to pass the observer reference in each of the calls to the library.
+ * 
+ * If the response is available in the queue, responseAvailable will return true and the user can avail the pointer to the response object
+ * via getResponse call.
+ */
 class Observer{
 public:
     bool responseAvailable();
@@ -108,6 +109,9 @@ private:
     bool _responseAvailable;
 };
 
+/*
+ * The ResponseNotification which gets queued in the Observer's Notification Queue.
+ */
 class ResponseNotification: public Poco::Notification{
 public:
     typedef Poco::AutoPtr<ResponseNotification> Ptr;
@@ -119,6 +123,11 @@ private:
 
 static Poco::NotificationQueue reqeustQueue;
 
+
+/*
+ * Actual library interface for GET/POST/PUT/DELETE REST calls. In each of the method's Observer reference is required to queue the responses in the
+ * observer's Notification Queue.
+ */
 
 class JsonPost {
 public:

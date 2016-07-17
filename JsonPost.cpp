@@ -84,6 +84,11 @@ int Request::getPostUserID(){
 }
 
 
+/*
+ * Dequeues response object from the observer's notification queue and returns the object.
+ * If this function is called without calling the responseAvailable method, the call will block till the response is available.
+ */
+
 Response* Observer::getResponse() {
     Notification::Ptr pNf(responseQueue.waitDequeueNotification());
     if (pNf) {
@@ -101,19 +106,9 @@ Response* Observer::getResponse() {
         return NULL;
 }
 
-
 /*
-
-RequestNotification::RequestNotification(Request* req):
-request(req)
-{
-}
-
-Request* RequestNotification::getRequest() const
-{
-    return request;
-}
-
+ * The Thread class. When a new thread is spawned, it takes the request object and sends it
+ * and waits for the response. When the response is available, it queues the response in the observer's notification queue.
  */
 
 class ResponseRunnable : public Poco::Runnable{
@@ -126,6 +121,9 @@ public:
     }
     virtual void run(){
         try{
+            /*
+             * Checks the request type and calls appropriate function
+             */
             switch(request->getRequestType()){
                 case (reqType::GETID):
                     runGetID();
@@ -167,6 +165,9 @@ public:
                 res->setHTTPStatus(HTTPResponse::HTTP_OK);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
+                    /*
+                     * Observer object can be common among multiple threads, hence the need for locking while accessing it's variables.
+                     */
                     FastMutex::ScopedLock lock(Observer::observerMutex);
                     observer.setResponseAvailable(true);
                 }
@@ -352,8 +353,16 @@ private:
 FastMutex JsonPost::reqIDMutex;
 FastMutex Observer::observerMutex;
 
+/*
+ * The post object's doGet method. Spawns a new thread of type ResponseRunnable and returns.
+ * The new thread is responsible for queuing the response in the observer's Notification queue.
+ */
 int JsonPost::doGet(int id, Observer& o){
     int reqID;
+    /*
+     * The JsonPost object can also be shared between multiple threads. Need to ensure the thread safety
+     * when returning requestIDs.
+     */
     {
         FastMutex::ScopedLock lock(reqIDMutex);
         reqID = ++requestID;
