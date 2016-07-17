@@ -16,7 +16,7 @@ int doPost(std::string title, std::string body, int userID, Observer&);
 int doUpdate(int id, std::string title, std::string body, int userID, Observer&);
 int doDelete(int id, Observer&);
 
-An application has to pass to create an Observer object and pass it along with the call for a non-blocking REST call.
+An application has to create an Observer object and pass the reference with the call for a non-blocking REST call.
 The response availability can be checked in observer using responseAvailable method. Once the response is available, the user can get the 
 pointer to the response object using observer's getResponse method. All the methods are thread safe.
 
