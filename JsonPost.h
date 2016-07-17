@@ -57,6 +57,10 @@ public:
         body = "";
     }
     reqType getRequestType(void);
+    int getPostID();
+    int getPostUserID();
+    std::string getPostTitle();
+    std::string getPostBody();
 private:
     int postID;
     int userID;
@@ -118,6 +122,7 @@ public:
     JsonPost();
     JsonPost(const JsonPost& orig);
     int doGet(int id, Observer&);
+    int doPost(std::string title, std::string body, int userID, Observer&);
     virtual ~JsonPost();
 private:
     static Poco::FastMutex reqIDMutex;

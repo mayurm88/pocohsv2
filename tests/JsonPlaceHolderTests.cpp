@@ -54,7 +54,7 @@ void JsonPlaceHolderTests::testGetID(){
     try{    
         id = 10;
         rID = jp.doGet(id, ob);
-        std::cout<<std::endl<<"Request id for GET request is "<<rID<<std::endl;
+        std::cout<<std::endl<<"Request id for GETID request is "<<rID<<std::endl;
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
@@ -63,7 +63,7 @@ void JsonPlaceHolderTests::testGetID(){
                 break;
             }
             else{
-                std::cout<<"I am doing some other work"<<std::endl;
+                //std::cout<<"I am doing some other work"<<std::endl;
                 Thread::sleep(10);
             }
         }
@@ -72,6 +72,45 @@ void JsonPlaceHolderTests::testGetID(){
             std::cerr<<e.displayText()<<std::endl;
     }
     std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
+    if(!testString.compare(resultString))
+        CPPUNIT_ASSERT(true);
+    else
+        CPPUNIT_ASSERT(false);
+}
+
+
+void JsonPlaceHolderTests::testPost(){
+    JsonPost jp;
+    Observer ob;
+    std::string testString, resultString="";
+    int rID;
+    Response* res;
+    std::string title = "mytitle";
+    std::string body = "mybody";
+    int userID = 69;
+    testString = "{\n  \"title\": \""+title+"\",\n  \"body\": \""+body+"\",\n  \"userID\": "+std::to_string(userID)+",\n  \"id\": 101\n}";
+    try{    
+        rID = jp.doPost(title, body, userID, ob);
+        std::cout<<std::endl<<"Request id for POST request is "<<rID<<std::endl;
+        while(1){
+            if(ob.responseAvailable()){
+                res = ob.getResponse();
+                if(res)
+                    resultString = res->getResponseString();
+                break;
+            }
+            else{
+                //std::cout<<"I am doing some other work"<<std::endl;
+                Thread::sleep(10);
+            }
+        }
+    }
+    catch(Exception& e){
+            std::cerr<<e.displayText()<<std::endl;
+    }
+    std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
+    //std::cout<<"Response is : "<<resultString<<std::endl;
+    //std::cout<<"testString is : "<<testString<<std::endl;
     if(!testString.compare(resultString))
         CPPUNIT_ASSERT(true);
     else

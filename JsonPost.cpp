@@ -59,6 +59,23 @@ reqType Request::getRequestType(){
     return _reqType;
 }
 
+int Request::getPostID() {
+    return postID;
+}
+
+std::string Request::getPostTitle(){
+    return title;
+}
+
+std::string Request::getPostBody(){
+    return body;
+}
+
+int Request::getPostUserID(){
+    return userID;
+}
+
+
 Response* Observer::getResponse() {
     Notification::Ptr pNf(responseQueue.waitDequeueNotification());
     if (pNf) {
@@ -93,11 +110,10 @@ Request* RequestNotification::getRequest() const
 
 class ResponseRunnable : public Poco::Runnable{
 public:
-    ResponseRunnable(int pID, Observer& o, Request *req, int rID):
-    postID(pID),
-    observer(o),
+    ResponseRunnable(Request *req, int rID, Observer& o):
     request(req),
-    reqID(rID)
+    reqID(rID),
+    observer(o)
     {
     }
     virtual void run(){
@@ -127,7 +143,7 @@ public:
     void runGetID(){
         try{
             std::string result;
-            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(postID));
+            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(request->getPostID()));
             std::string path(uri.getPathAndQuery());
             HTTPClientSession session(uri.getHost(), uri.getPort());
             HTTPRequest request(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
@@ -154,8 +170,38 @@ public:
         
     }
     void runPost(){
-        
+        try{
+            std::string result;
+            URI uri("http://jsonplaceholder.typicode.com/posts/");
+            std::string path(uri.getPathAndQuery());
+            HTTPClientSession session(uri.getHost(), uri.getPort());
+            session.setKeepAlive(true);
+            HTTPRequest hrequest(HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1);
+            hrequest.setKeepAlive(true);
+            hrequest.setContentType("application/x-www-form-urlencoded");
+            std::string requestBody("title="+request->getPostTitle()+"&body="+request->getPostBody()+"&userID="+std::to_string(request->getPostUserID()));
+            hrequest.setContentLength(requestBody.length());
+            HTTPResponse response;
+            std::ostream& ostreamSession = session.sendRequest(hrequest);
+            ostreamSession << requestBody;
+            std::istream& rs = session.receiveResponse(response);
+            if(response.getStatus() == Poco::Net::HTTPResponse::HTTP_CREATED){
+                StreamCopier::copyToString(rs, result);
+                Response *res = new Response;
+                res->setResponseString(result);
+                res->setReqID(reqID);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+        }
+        catch(Exception& exc){
+            std::cerr<< exc.displayText() << std::endl;
+        }
     }
+    
     void runUpdate(){
         
     }
@@ -163,7 +209,6 @@ public:
         
     }
 private:
-    int postID;
     int reqID;
     Request *request;
     Observer& observer;
@@ -180,11 +225,25 @@ int JsonPost::doGet(int id, Observer& o){
         reqID = ++requestID;
     }
     Request *req = new Request(id, reqType::GETID);
-    ResponseRunnable* runnable = new ResponseRunnable(id, o, req, reqID);
+    ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
     Thread* t = new Thread;
     t->start(*runnable);
     return reqID;
 }
+
+int JsonPost::doPost(std::string title, std::string body, int userID, Observer& o){
+    int reqID;
+    {
+        FastMutex::ScopedLock lock(reqIDMutex);
+        reqID = ++requestID;
+    }
+    Request *req = new Request(title, body, userID, reqType::POST);
+    ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
+    Thread* t = new Thread;
+    t->start(*runnable);
+    return reqID;
+}
+
 
 JsonPost::JsonPost() {
     requestID = 0;
