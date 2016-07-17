@@ -157,29 +157,28 @@ public:
             HTTPClientSession session(uri.getHost(), uri.getPort());
             HTTPRequest request(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
             HTTPResponse response;
-                session.sendRequest(request);
-                std::istream& rs = session.receiveResponse(response);
-                if(response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK){
-                    StreamCopier::copyToString(rs, result);
-                    Response *res = new Response;
-                    res->setResponseString(result);
-                    res->setReqID(reqID);
-                    res->setHTTPStatus(HTTPResponse::HTTP_OK);
-                    observer.responseQueue.enqueueNotification(new ResponseNotification(res));
-                    {
-                        FastMutex::ScopedLock lock(Observer::observerMutex);
-                        observer.setResponseAvailable(true);
-                    }
+            session.sendRequest(request);
+            std::istream& rs = session.receiveResponse(response);
+            if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK) {
+                StreamCopier::copyToString(rs, result);
+                Response *res = new Response;
+                res->setResponseString(result);
+                res->setReqID(reqID);
+                res->setHTTPStatus(HTTPResponse::HTTP_OK);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
                 }
-                else{
-                    Response *res = new Response;
-                    res->setHTTPStatus(response.getStatus());
-                    observer.responseQueue.enqueueNotification(new ResponseNotification(res));
-                    {
-                        FastMutex::ScopedLock lock(Observer::observerMutex);
-                        observer.setResponseAvailable(true);
-                    }
+            } else {
+                Response *res = new Response;
+                res->setHTTPStatus(response.getStatus());
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
                 }
+            }
         }
         catch(Exception& exc){
             std::cerr<< exc.displayText() << std::endl;
@@ -187,7 +186,39 @@ public:
     }
     
     void runGet(){
-        
+        try{
+            std::string result;
+            URI uri("http://jsonplaceholder.typicode.com/posts/");
+            std::string path(uri.getPathAndQuery());
+            HTTPClientSession session(uri.getHost(), uri.getPort());
+            HTTPRequest request(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
+            HTTPResponse response;
+            session.sendRequest(request);
+            std::istream& rs = session.receiveResponse(response);
+            if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK) {
+                StreamCopier::copyToString(rs, result);
+                Response *res = new Response;
+                res->setResponseString(result);
+                res->setReqID(reqID);
+                res->setHTTPStatus(HTTPResponse::HTTP_OK);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            } else {
+                Response *res = new Response;
+                res->setHTTPStatus(response.getStatus());
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+        }        
+        catch (Exception& exc) {
+            std::cerr<< exc.displayText() << std::endl;
+        }
     }
     
     void runPost(){
@@ -333,6 +364,20 @@ int JsonPost::doGet(int id, Observer& o){
     t->start(*runnable);
     return reqID;
 }
+
+int JsonPost::doGet(Observer& o){
+    int reqID;
+    {
+        FastMutex::ScopedLock lock(reqIDMutex);
+        reqID = ++requestID;
+    }
+    Request *req = new Request(reqType::GET);
+    ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
+    Thread* t = new Thread;
+    t->start(*runnable);
+    return reqID;
+}
+
 
 int JsonPost::doPost(std::string title, std::string body, int userID, Observer& o){
     int reqID;

@@ -125,6 +125,7 @@ public:
     JsonPost();
     JsonPost(const JsonPost& orig);
     int doGet(int id, Observer&);
+    int doGet(Observer&);
     int doPost(std::string title, std::string body, int userID, Observer&);
     int doUpdate(int id, std::string title, std::string body, int userID, Observer&);
     int doDelete(int id, Observer&);

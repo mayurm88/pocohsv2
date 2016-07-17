@@ -197,3 +197,37 @@ void JsonPlaceHolderTests::testDelete(){
     std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
     CPPUNIT_ASSERT(deleteSuccessful);
 }
+
+
+void JsonPlaceHolderTests::testGet(){
+    JsonPost jp;
+    Observer ob;
+    int rID;
+    bool getSuccessful = false;
+    Response* res;
+    try{    
+        rID = jp.doGet(ob);
+        std::cout<<std::endl<<"Request id for GET request is "<<rID<<std::endl;
+        while(1){
+            if(ob.responseAvailable()){
+                res = ob.getResponse();
+                if(res->getHTTPStatus() == Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK)
+                    getSuccessful = true;
+                else
+                    getSuccessful = false;
+                break;
+            }
+            else{
+                //std::cout<<"I am doing some other work"<<std::endl;
+                Thread::sleep(10);
+            }
+        }
+    }
+    catch(Exception& e){
+            std::cerr<<e.displayText()<<std::endl;
+    }
+    std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
+    //std::cout<<"Response string is : "<<std::endl;
+    //std::cout<<res->getResponseString()<<std::endl;
+    CPPUNIT_ASSERT(getSuccessful);
+}
