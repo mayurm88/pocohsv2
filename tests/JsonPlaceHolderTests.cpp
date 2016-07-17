@@ -58,8 +58,10 @@ void JsonPlaceHolderTests::testGetID(){
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
-                if(res)
+                if(res && res->getHTTPStatus() == Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK)
                     resultString = res->getResponseString();
+                else
+                    resultString = "";
                 break;
             }
             else{
@@ -87,7 +89,7 @@ void JsonPlaceHolderTests::testPost(){
     Response* res;
     std::string title = "mytitle";
     std::string body = "mybody";
-    int userID = 69;
+    int userID = 5;
     testString = "{\n  \"title\": \""+title+"\",\n  \"body\": \""+body+"\",\n  \"userID\": "+std::to_string(userID)+",\n  \"id\": 101\n}";
     try{    
         rID = jp.doPost(title, body, userID, ob);
@@ -95,8 +97,10 @@ void JsonPlaceHolderTests::testPost(){
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
-                if(res)
+                if(res && res->getHTTPStatus() == Poco::Net::HTTPResponse::HTTPStatus::HTTP_CREATED)
                     resultString = res->getResponseString();
+                else
+                    resultString = "";
                 break;
             }
             else{
@@ -124,7 +128,7 @@ void JsonPlaceHolderTests::testUpdate(){
     Observer ob;
     std::string testString, resultString="";
     int rID;
-    int postID = 42;
+    int postID = 89;
     Response* res;
     std::string title = "mytitle";
     std::string body = "mybody";
@@ -136,8 +140,10 @@ void JsonPlaceHolderTests::testUpdate(){
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
-                if(res)
+                if(res && res->getHTTPStatus() == Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK)
                     resultString = res->getResponseString();
+                else
+                    resultString = "";
                 break;
             }
             else{
