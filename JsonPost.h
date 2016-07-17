@@ -87,8 +87,11 @@ public:
     std::string getResponseString();
     void setReqID(int id);
     int getReqID();
+    Poco::Net::HTTPResponse::HTTPStatus getHTTPStatus();
+    void setHTTPStatus(Poco::Net::HTTPResponse::HTTPStatus);
 private:
     int reqID;
+    Poco::Net::HTTPResponse::HTTPStatus status;
     std::string resStr; // Response string if the user wants to convert to JSON.
 };
 
@@ -124,6 +127,7 @@ public:
     int doGet(int id, Observer&);
     int doPost(std::string title, std::string body, int userID, Observer&);
     int doUpdate(int id, std::string title, std::string body, int userID, Observer&);
+    int doDelete(int id, Observer&);
     virtual ~JsonPost();
 private:
     static Poco::FastMutex reqIDMutex;

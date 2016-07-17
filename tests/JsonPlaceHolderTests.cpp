@@ -132,7 +132,7 @@ void JsonPlaceHolderTests::testUpdate(){
     testString = "{\n  \"id\": "+std::to_string(postID)+",\n  \"title\": \""+title+"\",\n  \"body\": \""+body+"\",\n  \"userID\": "+std::to_string(userID)+"\n}";
     try{    
         rID = jp.doUpdate(postID, title, body, userID, ob);
-        std::cout<<std::endl<<"Request id for POST request is "<<rID<<std::endl;
+        std::cout<<std::endl<<"Request id for UPDATE request is "<<rID<<std::endl;
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
@@ -156,4 +156,38 @@ void JsonPlaceHolderTests::testUpdate(){
         CPPUNIT_ASSERT(true);
     else
         CPPUNIT_ASSERT(false);
+}
+
+
+void JsonPlaceHolderTests::testDelete(){
+    JsonPost jp;
+    Observer ob;
+    int rID;
+    int id;
+    bool deleteSuccessful = false;
+    Response* res;
+    try{    
+        id = 88;
+        rID = jp.doDelete(id, ob);
+        std::cout<<std::endl<<"Request id for DELETE request is "<<rID<<std::endl;
+        while(1){
+            if(ob.responseAvailable()){
+                res = ob.getResponse();
+                if(res->getHTTPStatus() == Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK)
+                    deleteSuccessful = true;
+                else
+                    deleteSuccessful = false;
+                break;
+            }
+            else{
+                //std::cout<<"I am doing some other work"<<std::endl;
+                Thread::sleep(10);
+            }
+        }
+    }
+    catch(Exception& e){
+            std::cerr<<e.displayText()<<std::endl;
+    }
+    std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
+    CPPUNIT_ASSERT(deleteSuccessful);
 }

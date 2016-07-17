@@ -46,6 +46,14 @@ int Response::getReqID(){
     return reqID;
 }
 
+HTTPResponse::HTTPStatus Response::getHTTPStatus(){
+    return status;
+}
+
+void Response::setHTTPStatus(Poco::Net::HTTPResponse::HTTPStatus st){
+    status = st;
+}
+
 bool Observer::responseAvailable(){
     return _responseAvailable;
 }
@@ -140,6 +148,7 @@ public:
             std::cerr<< exc.displayText() << std::endl;
         }
     }
+    
     void runGetID(){
         try{
             std::string result;
@@ -155,6 +164,16 @@ public:
                     Response *res = new Response;
                     res->setResponseString(result);
                     res->setReqID(reqID);
+                    res->setHTTPStatus(HTTPResponse::HTTP_OK);
+                    observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                    {
+                        FastMutex::ScopedLock lock(Observer::observerMutex);
+                        observer.setResponseAvailable(true);
+                    }
+                }
+                else{
+                    Response *res = new Response;
+                    res->setHTTPStatus(response.getStatus());
                     observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                     {
                         FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -166,9 +185,11 @@ public:
             std::cerr<< exc.displayText() << std::endl;
         }
     }
+    
     void runGet(){
         
     }
+    
     void runPost(){
         try{
             std::string result;
@@ -190,6 +211,16 @@ public:
                 Response *res = new Response;
                 res->setResponseString(result);
                 res->setReqID(reqID);
+                res->setHTTPStatus(HTTPResponse::HTTP_CREATED);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+            else{
+                Response *res = new Response;
+                res->setHTTPStatus(response.getStatus());
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -223,6 +254,52 @@ public:
                 Response *res = new Response;
                 res->setResponseString(result);
                 res->setReqID(reqID);
+                res->setHTTPStatus(HTTPResponse::HTTP_OK);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            } 
+            else {
+                Response *res = new Response;
+                res->setHTTPStatus(response.getStatus());
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+            
+        }
+        catch(Exception& exc){
+            std::cerr<< exc.displayText() << std::endl;
+        }
+    }
+    
+    void runDelete(){
+        try{
+            std::string result;
+            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(request->getPostID()) );
+            std::string path(uri.getPathAndQuery());
+            HTTPClientSession session(uri.getHost(), uri.getPort());
+            HTTPRequest hrequest(HTTPRequest::HTTP_DELETE, path, HTTPMessage::HTTP_1_1);
+            HTTPResponse response;
+            session.sendRequest(hrequest);
+            std::istream& rs = session.receiveResponse(response);
+            if(response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK){
+                Response *res = new Response;
+                res->setReqID(reqID);
+                res->setHTTPStatus(HTTPResponse::HTTP_OK);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+            else {
+                Response *res = new Response;
+                res->setHTTPStatus(response.getStatus());
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -233,9 +310,6 @@ public:
         catch(Exception& exc){
             std::cerr<< exc.displayText() << std::endl;
         }
-    }
-    void runDelete(){
-        
     }
 private:
     int reqID;
@@ -281,6 +355,19 @@ int JsonPost::doUpdate(int id, std::string title, std::string body, int userID, 
         reqID = ++requestID;
     }
     Request *req = new Request(id, title, body, userID, reqType::UPDATE);
+    ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
+    Thread* t = new Thread;
+    t->start(*runnable);
+    return reqID;
+}
+
+int JsonPost::doDelete(int id, Observer& o){
+    int reqID;
+    {
+        FastMutex::ScopedLock lock(reqIDMutex);
+        reqID = ++requestID;
+    }
+    Request *req = new Request(id, reqType::DELETE);
     ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
     Thread* t = new Thread;
     t->start(*runnable);

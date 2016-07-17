@@ -19,6 +19,7 @@ class JsonPlaceHolderTests : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testGetID);
     CPPUNIT_TEST(testPost);
     CPPUNIT_TEST(testUpdate);
+    CPPUNIT_TEST(testDelete);
 
     CPPUNIT_TEST_SUITE_END();
 
@@ -34,6 +35,7 @@ private:
     void testGetID();
     void testPost();
     void testUpdate();
+    void testDelete();
 };
 
 #endif	/* JSONPLACEHOLDERTESTS_H */
