@@ -203,7 +203,36 @@ public:
     }
     
     void runUpdate(){
-        
+        try{
+            std::string result;
+            URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(request->getPostID()));
+            std::string path(uri.getPathAndQuery());
+            HTTPClientSession session(uri.getHost(), uri.getPort());
+            session.setKeepAlive(true);
+            HTTPRequest hrequest(HTTPRequest::HTTP_PUT, path, HTTPMessage::HTTP_1_1);
+            hrequest.setKeepAlive(true);
+            hrequest.setContentType("application/x-www-form-urlencoded");
+            std::string requestBody("id="+std::to_string(request->getPostID())+"&title="+request->getPostTitle()+"&body="+request->getPostBody()+"&userID="+std::to_string(request->getPostUserID()));
+            hrequest.setContentLength(requestBody.length());
+            HTTPResponse response;
+            std::ostream& ostreamSession = session.sendRequest(hrequest);
+            ostreamSession << requestBody;
+            std::istream& rs = session.receiveResponse(response);
+            if(response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK){
+                StreamCopier::copyToString(rs, result);
+                Response *res = new Response;
+                res->setResponseString(result);
+                res->setReqID(reqID);
+                observer.responseQueue.enqueueNotification(new ResponseNotification(res));
+                {
+                    FastMutex::ScopedLock lock(Observer::observerMutex);
+                    observer.setResponseAvailable(true);
+                }
+            }
+        }
+        catch(Exception& exc){
+            std::cerr<< exc.displayText() << std::endl;
+        }
     }
     void runDelete(){
         
@@ -244,6 +273,19 @@ int JsonPost::doPost(std::string title, std::string body, int userID, Observer& 
     return reqID;
 }
 
+
+int JsonPost::doUpdate(int id, std::string title, std::string body, int userID, Observer& o){
+    int reqID;
+    {
+        FastMutex::ScopedLock lock(reqIDMutex);
+        reqID = ++requestID;
+    }
+    Request *req = new Request(id, title, body, userID, reqType::UPDATE);
+    ResponseRunnable* runnable = new ResponseRunnable(req, reqID, o);
+    Thread* t = new Thread;
+    t->start(*runnable);
+    return reqID;
+}
 
 JsonPost::JsonPost() {
     requestID = 0;

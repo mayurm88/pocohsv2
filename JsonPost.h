@@ -123,6 +123,7 @@ public:
     JsonPost(const JsonPost& orig);
     int doGet(int id, Observer&);
     int doPost(std::string title, std::string body, int userID, Observer&);
+    int doUpdate(int id, std::string title, std::string body, int userID, Observer&);
     virtual ~JsonPost();
 private:
     static Poco::FastMutex reqIDMutex;

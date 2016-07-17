@@ -116,3 +116,44 @@ void JsonPlaceHolderTests::testPost(){
     else
         CPPUNIT_ASSERT(false);
 }
+
+
+
+void JsonPlaceHolderTests::testUpdate(){
+    JsonPost jp;
+    Observer ob;
+    std::string testString, resultString="";
+    int rID;
+    int postID = 42;
+    Response* res;
+    std::string title = "mytitle";
+    std::string body = "mybody";
+    int userID = 69;
+    testString = "{\n  \"id\": "+std::to_string(postID)+",\n  \"title\": \""+title+"\",\n  \"body\": \""+body+"\",\n  \"userID\": "+std::to_string(userID)+"\n}";
+    try{    
+        rID = jp.doUpdate(postID, title, body, userID, ob);
+        std::cout<<std::endl<<"Request id for POST request is "<<rID<<std::endl;
+        while(1){
+            if(ob.responseAvailable()){
+                res = ob.getResponse();
+                if(res)
+                    resultString = res->getResponseString();
+                break;
+            }
+            else{
+                //std::cout<<"I am doing some other work"<<std::endl;
+                Thread::sleep(10);
+            }
+        }
+    }
+    catch(Exception& e){
+            std::cerr<<e.displayText()<<std::endl;
+    }
+    std::cout<<"Received response for request ID : "<<res->getReqID()<<std::endl;
+    //std::cout<<"Response is : "<<resultString<<std::endl;
+    //std::cout<<"testString is : "<<testString<<std::endl;
+    if(!testString.compare(resultString))
+        CPPUNIT_ASSERT(true);
+    else
+        CPPUNIT_ASSERT(false);
+}
