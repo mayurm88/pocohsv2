@@ -55,6 +55,10 @@ void Observer::setResponseAvailable(bool flag){
 }
 
 
+reqType Request::getRequestType(){
+    return _reqType;
+}
+
 Response* Observer::getResponse() {
     Notification::Ptr pNf(responseQueue.waitDequeueNotification());
     if (pNf) {
@@ -89,13 +93,38 @@ Request* RequestNotification::getRequest() const
 
 class ResponseRunnable : public Poco::Runnable{
 public:
-    ResponseRunnable(int pID, Observer& o, int rID):
+    ResponseRunnable(int pID, Observer& o, Request *req, int rID):
     postID(pID),
     observer(o),
+    request(req),
     reqID(rID)
     {
     }
     virtual void run(){
+        try{
+            switch(request->getRequestType()){
+                case (reqType::GETID):
+                    runGetID();
+                    break;
+                case (reqType::GET):
+                    runGet();
+                    break;
+                case (reqType::POST):
+                    runPost();
+                    break;
+                case (reqType::UPDATE):
+                    runUpdate();
+                    break;
+                case (reqType::DELETE):
+                    runDelete();
+                    break;
+            }
+        }
+        catch(Exception& exc){
+            std::cerr<< exc.displayText() << std::endl;
+        }
+    }
+    void runGetID(){
         try{
             std::string result;
             URI uri("http://jsonplaceholder.typicode.com/posts/" + std::to_string(postID));
@@ -121,9 +150,22 @@ public:
             std::cerr<< exc.displayText() << std::endl;
         }
     }
+    void runGet(){
+        
+    }
+    void runPost(){
+        
+    }
+    void runUpdate(){
+        
+    }
+    void runDelete(){
+        
+    }
 private:
     int postID;
     int reqID;
+    Request *request;
     Observer& observer;
 };
 
@@ -137,7 +179,8 @@ int JsonPost::doGet(int id, Observer& o){
         FastMutex::ScopedLock lock(reqIDMutex);
         reqID = ++requestID;
     }
-    ResponseRunnable* runnable = new ResponseRunnable(id, o, reqID);
+    Request *req = new Request(id, reqType::GETID);
+    ResponseRunnable* runnable = new ResponseRunnable(id, o, req, reqID);
     Thread* t = new Thread;
     t->start(*runnable);
     return reqID;

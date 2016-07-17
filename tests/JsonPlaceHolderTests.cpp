@@ -46,7 +46,7 @@ void JsonPlaceHolderTests::testFailedMethod() {
 void JsonPlaceHolderTests::testGetID(){
     JsonPost jp;
     Observer ob;
-    std::string testString, resultString;
+    std::string testString, resultString="";
     int rID;
     int id;
     Response* res;
@@ -58,7 +58,8 @@ void JsonPlaceHolderTests::testGetID(){
         while(1){
             if(ob.responseAvailable()){
                 res = ob.getResponse();
-                resultString = res->getResponseString();
+                if(res)
+                    resultString = res->getResponseString();
                 break;
             }
             else{

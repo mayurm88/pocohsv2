@@ -18,18 +18,54 @@
 #include "Poco//Thread.h"
 
 
-/*
+
+enum class reqType {GET, GETID, POST, UPDATE, DELETE};
+
+
 class Request {
 public:
-    int id;
-    Poco::NotificationQueue* resQ;
-    Request(int reqID, Poco::NotificationQueue* resQueue):
-    id(reqID),
-    resQ(resQueue)
+    Request(int id, std::string postTitle, std::string postBody, int uID, reqType rType) :
+    postID(id),
+    title(postTitle),
+    body(postBody),
+    userID(uID),
+    _reqType(rType)
     {
     }
+    Request(std::string postTitle, std::string postBody, int uID, reqType rType) :
+    title(postTitle),
+    body(postBody),
+    userID(uID),
+    _reqType(rType)
+    {
+        postID = -1;
+    }
+    Request(int id, reqType rType) :
+    postID(id),
+    _reqType(rType)
+    {
+        title = "";
+        body = "";
+        userID = -1;
+    }
+    Request(reqType rType):
+    _reqType(rType)
+    {
+        postID = -1;
+        userID = -1;
+        title = "";
+        body = "";
+    }
+    reqType getRequestType(void);
+private:
+    int postID;
+    int userID;
+    std::string title;
+    std::string body;
+    reqType _reqType;
 };
 
+/*
 class RequestNotification: public Poco::Notification{
 public:
     typedef Poco::AutoPtr<RequestNotification> Ptr;
