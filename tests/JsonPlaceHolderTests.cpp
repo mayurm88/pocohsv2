@@ -5,7 +5,10 @@
  * Created on 16 Jul, 2016, 11:58:57 AM
  */
 
+#include <Poco/Random.h>
+
 #include "JsonPlaceHolderTests.h"
+#include "Poco/ThreadLocal.h"
 
 using Poco::NotificationQueue;
 using Poco::URI;
@@ -18,8 +21,97 @@ using Poco::Notification;
 using Poco::FastMutex;
 using Poco::ThreadPool;
 using Poco::Thread;
+using Poco::ThreadLocal;
 using Poco::Exception;
 
+
+class TestRunnable : public Poco::Runnable{
+public:
+    TestRunnable(Observer& ob, JsonPost& _jp, int _customSeed, std::string name, bool *res):
+    o(ob),
+    jp(_jp),
+    customSeed(_customSeed),
+    _name(name),
+    result(res)
+    {
+        random.seed(customSeed);
+    }
+    virtual void run(){
+        requests = getRandom100();
+        {
+            FastMutex::ScopedLock lock(printMutex);
+            std::cout<<_name<<" will make "<<requests<<" requests."<<std::endl;
+        }
+        for(int i = 0; i < requests; i++){
+            method = getMethod();
+            int reqID;
+            std::string methodString;
+            switch(method){
+                case 1:
+                    reqID = jp.doGet(getRandom100(), o);
+                    methodString = "GETID";
+                    break;
+                case 2:
+                    reqID = jp.doGet(o);
+                    methodString = "GETALL";
+                    break;
+                case 3:
+                    reqID = jp.doPost("mytitle", "mybody", getRandom100(), o);
+                    methodString = "POST";
+                    break;
+                case 4:
+                    reqID = jp.doUpdate(getRandom100(), "mytitle", "mybody", getRandom100(), o);
+                    methodString = "UPDATE";
+                    break;
+                case 5:
+                    reqID = jp.doDelete(getRandom100(), o);
+                    methodString = "DELETE";
+                    break;
+            }
+            {
+                FastMutex::ScopedLock lock(printMutex);
+                std::cout<<_name<<" sent "<<methodString<<" request and got request id : "<<reqID<<std::endl;
+            }
+        }
+        while(requests > 0){
+            if(o.responseAvailable()){
+                Response *res = o.getResponse();
+                {
+                    FastMutex::ScopedLock lock(printMutex);
+                    std::cout<<_name<<" got response for request ID : "<<res->getReqID()<<" and the response status is : "<<res->getHTTPStatus()<<std::endl;
+                }
+                (requests)--;
+            }
+            else{
+                Thread::sleep(20);
+            }
+        }
+        Thread::sleep(500);
+        if(o.responseAvailable())
+            *result = false;
+        else
+            *result = true;
+    }
+    int getRandom100(){
+        return (random.next(100) + 1);
+    }
+    int getMethod(){
+        return (random.next(5) + 1);
+    }
+private:
+    Observer& o;
+    JsonPost& jp;
+    int method;
+    int requests;
+    int customSeed;
+    Poco::Random random;
+    std::string _name;
+    bool* result;
+    static FastMutex printMutex;
+};
+
+
+FastMutex TestRunnable::printMutex;
 
 CPPUNIT_TEST_SUITE_REGISTRATION(JsonPlaceHolderTests);
 
@@ -230,4 +322,28 @@ void JsonPlaceHolderTests::testGet(){
     //std::cout<<"Response string is : "<<std::endl;
     //std::cout<<res->getResponseString()<<std::endl;
     CPPUNIT_ASSERT(getSuccessful);
+}
+
+
+void JsonPlaceHolderTests::testThreads(){
+    Observer o1, o2, o3;
+    JsonPost jp;
+    bool *t1result, *t2result, *t3result;
+    t1result = new bool;
+    t2result = new bool;
+    t3result = new bool;
+    *t1result = false;
+    *t2result = false;
+    *t3result = false;
+    TestRunnable tr1(o1, jp, 998754, "Thread1", t1result);
+    TestRunnable tr2(o2, jp, 554678, "Thread2", t2result);
+    TestRunnable tr3(o3, jp, 789546, "Thread3", t3result);
+    Thread t1, t2, t3;
+    t1.start(tr1);
+    t2.start(tr2);
+    t3.start(tr3);
+    t1.join();
+    t2.join();
+    t3.join();
+    CPPUNIT_ASSERT(*t1result && *t2result && *t3result);
 }
