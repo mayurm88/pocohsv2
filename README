@@ -30,7 +30,7 @@ Tools:
 
 Follow steps below to compile and run the app:
 
- 1. Make sure the Poco include files are in /usr/local/include and the Poco libraries are in /usr/local/lib. If this is not the case, you will have to modify the Makefile to compile the program.
+ 1. Make sure the Poco include files are in /usr/local/include and the Poco libraries are in /usr/local/lib. If this is not the case, you will have to modify the Makefile to compile the library.
  2. Go to any directory you want the source code to be downloaded
  3. type 'git clone https://github.com/musicophilic/pocohsv2'
  4. cd pocohsv2
@@ -38,4 +38,4 @@ Follow steps below to compile and run the app:
  6. make
  7. The library file will be generated : ./dist/Debug/GNU-MacOSX/libpohohsv2.dylib
  8. Use this library in your application to make the above calls.
- 9. To test the library with the included unit tests, you can type 'make test'. You will required the CppUnit library installed in /usr/local/lib to test.
+ 9. To test the library with the included unit tests, you can type 'make test'. You should have the CppUnit library installed in /usr/local/lib for this.
