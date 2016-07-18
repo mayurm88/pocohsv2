@@ -174,6 +174,7 @@ public:
             } else {
                 Response *res = new Response;
                 res->setHTTPStatus(response.getStatus());
+                res->setReqID(reqID);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -210,6 +211,7 @@ public:
             } else {
                 Response *res = new Response;
                 res->setHTTPStatus(response.getStatus());
+                res->setReqID(reqID);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -253,6 +255,7 @@ public:
             else{
                 Response *res = new Response;
                 res->setHTTPStatus(response.getStatus());
+                res->setReqID(reqID);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -296,6 +299,7 @@ public:
             else {
                 Response *res = new Response;
                 res->setHTTPStatus(response.getStatus());
+                res->setReqID(reqID);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
@@ -332,6 +336,7 @@ public:
             else {
                 Response *res = new Response;
                 res->setHTTPStatus(response.getStatus());
+                res->setReqID(reqID);
                 observer.responseQueue.enqueueNotification(new ResponseNotification(res));
                 {
                     FastMutex::ScopedLock lock(Observer::observerMutex);
